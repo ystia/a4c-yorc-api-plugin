@@ -1,0 +1,82 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'version to be released (defaults to the version targeted by the current snapshot version)'
+        required: false
+        default: ''
+      next_snapshot_version:
+        description: 'next version to use (defaults to the next minor snapshot version)'
+        required: false
+        default: ''
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      released_tag_name: ${{ steps.mvn-release.outputs.tag }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+    - name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Configure Git user
+      run: |
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
+
+    - name: Release and Publish artifacts with Maven
+      id: mvn-release
+      run: |
+        mvn_params=""
+        if [[ -n "${{ github.event.inputs.release_version }}" ]] ; then
+          mvn_params="${mvn_params} -DreleaseVersion=${{ github.event.inputs.release_version }}"
+        fi
+        if [[ -n "${{ github.event.inputs.next_snapshot_version }}" ]] ; then
+          mvn_params="${mvn_params} -DdevelopmentVersion=${{ github.event.inputs.next_snapshot_version }}"
+        fi
+        mvn -B release:prepare --file pom.xml ${mvn_params} -s $GITHUB_WORKSPACE/settings.xml
+        tagName=$(cat release.properties | grep "scm.tag=" | awk -F= '{print $2}')
+        mvn -P '!release-profile' -DuseReleaseProfile=false -B release:perform --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
+        echo "::set-output name=tag::${tagName}"
+        echo "::set-env name=TAG_NAME::${tagName}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create or Update Github Release draft
+      id: update_release
+      uses: loicalbertin/action-gh-release@080e2e752ac77817dcfd2e8809873bdc24817584
+      with:
+        tag_name: ${{ env.TAG_NAME }}
+        name: ${{ env.TAG_NAME }}
+        draft: true
+        files: target/checkout/target/alien4cloud-yorc-api-plugin-*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish Github Release
+      uses: eregon/publish-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ steps.update_release.outputs.id }}

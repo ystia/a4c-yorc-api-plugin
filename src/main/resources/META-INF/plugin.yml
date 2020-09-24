@@ -1,0 +1,7 @@
+# Each plugin should have a unique ID.
+id: alien4cloud-yorc-api-plugin
+name: API Plugin for Yorc Orchestrator
+version: ${project.version}
+description: This Alien 4 Cloud plugin provides a Rest API allowing to call API operation on a given Yorc orchestrator
+# The class that will be used to configure the child context that will be started at plugin start.
+configuration_class: alien4cloud.yorc.api.plugin.AppConfiguration

@@ -1,0 +1,11 @@
+# Intelij idea stuff
+.idea/
+
+target
+
+alien4cloud-yorc-api-plugin.iml
+.settings
+.classpath
+.factorypath
+.project
+.vscode
