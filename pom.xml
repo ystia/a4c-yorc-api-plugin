@@ -28,7 +28,7 @@
   <artifactId>alien4cloud-yorc-api-plugin</artifactId>
   <name>Alien 4 Cloud API Plugin for Yorc</name>
   <description>This Alien 4 Cloud plugin provides a Rest API allowing to call API operation on a given Yorc orchestrator</description>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
 
   <properties>
     <project.scm.id>github</project.scm.id>
@@ -36,7 +36,7 @@
 
   <scm>
     <developerConnection>scm:git:https://github.com/ystia/a4c-yorc-api-plugin.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.0.1</tag>
   </scm>
 
   <distributionManagement>
